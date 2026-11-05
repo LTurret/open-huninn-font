@@ -1,0 +1,31 @@
+name: Verify patched Huninn fonts
+
+on:
+  push:
+    branches:
+      - fix/spacing-accent-widths
+    paths:
+      - 'tools/build_personal_patches.py'
+      - 'tools/verify_reproducible.py'
+      - 'font/jf-openhuninn-2.1.patch.*.ttf'
+      - '.github/workflows/build-personal-patches.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install fonttools==4.63.0
+      - name: Rebuild patched fonts
+        run: python tools/build_personal_patches.py font/jf-openhuninn-2.1.ttf "$RUNNER_TEMP/huninn"
+      - name: Verify committed fonts (ignore only head.modified)
+        run: |
+          python tools/verify_reproducible.py "$RUNNER_TEMP/huninn/jf-openhuninn-2.1.patch.1.ttf" font/jf-openhuninn-2.1.patch.1.ttf
+          python tools/verify_reproducible.py "$RUNNER_TEMP/huninn/jf-openhuninn-2.1.patch.2.ttf" font/jf-openhuninn-2.1.patch.2.ttf
